@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using WebHookDeliveryService.Domain.Interfaces;
 using WebHookDeliveryService.Infrastructure.Persistence;
 using WebHookDeliveryService.Infrastructure.Persistence.Repositories;
@@ -16,6 +17,9 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<WebhookDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("PostgreSQL")));
 
+        services.AddSingleton<IConnectionMultiplexer>(
+            _ => ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
+
         services.AddScoped<IWebhookSubscriptionRepository, WebhookSubscriptionRepository>();
         services.AddScoped<IWebhookDeliveryRepository, WebhookDeliveryRepository>();
         services.AddScoped<IEventRepository, EventRepository>();
@@ -25,11 +29,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IWebhookSigner, WebhookSigner>();
         services.AddSingleton<IWebhookQueue, RedisWebhookQueue>();
         services.AddSingleton<IIdempotencyStore, RedisIdempotencyStore>();
-
-        services.AddStackExchangeRedisCache(options =>
-        {
-            options.Configuration = configuration.GetConnectionString("Redis");
-        });
 
         return services;
     }
