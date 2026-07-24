@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WebHookDeliveryService.Api/WebHookDeliveryService.Api.csproj" />
+    <Project Path="src/WebHookDeliveryService.Application/WebHookDeliveryService.Application.csproj" />
+    <Project Path="src/WebHookDeliveryService.Dashboard/WebHookDeliveryService.Dashboard.csproj" />
+    <Project Path="src/WebHookDeliveryService.Domain/WebHookDeliveryService.Domain.csproj" />
+    <Project Path="src/WebHookDeliveryService.Infrastructure/WebHookDeliveryService.Infrastructure.csproj" />
+    <Project Path="src/WebHookDeliveryService.Worker/WebHookDeliveryService.Worker.csproj" />
+  </Folder>
+</Solution>
