@@ -1,0 +1,50 @@
+@page "/events"
+@using WebHookDeliveryService.Application.DTOs
+@inject HttpClient Http
+
+<PageTitle>Events</PageTitle>
+
+<h1>Event Log</h1>
+
+@if (_events is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 8px;">Event Type</th>
+                <th style="padding: 8px;">Idempotency Key</th>
+                <th style="padding: 8px;">Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var evt in _events)
+            {
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px; font-weight: bold;">@evt.EventType</td>
+                    <td style="padding: 8px;">@(evt.IdempotencyKey ?? "-")</td>
+                    <td style="padding: 8px;">@evt.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<EventResponse>? _events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _events = await Http.GetFromJsonAsync<List<EventResponse>>("/api/events?take=100");
+        }
+        catch (Exception)
+        {
+            _events = [];
+        }
+    }
+}

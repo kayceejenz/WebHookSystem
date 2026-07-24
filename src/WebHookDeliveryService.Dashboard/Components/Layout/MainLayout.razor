@@ -1,9 +1,36 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<div style="display: flex; min-height: 100vh;">
+    <nav style="width: 220px; background: #1a237e; color: white; padding: 16px 0; flex-shrink: 0;">
+        <div style="padding: 16px; font-size: 18px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2);">
+            Webhook Dashboard
+        </div>
+        <div style="padding: 8px 0;">
+            <NavLink href="" style="display: block; padding: 10px 16px; color: white; text-decoration: none;">
+                Dashboard
+            </NavLink>
+            <NavLink href="subscriptions" style="display: block; padding: 10px 16px; color: white; text-decoration: none;">
+                Subscriptions
+            </NavLink>
+            <NavLink href="deliveries" style="display: block; padding: 10px 16px; color: white; text-decoration: none;">
+                Deliveries
+            </NavLink>
+            <NavLink href="dead-letters" style="display: block; padding: 10px 16px; color: white; text-decoration: none;">
+                Dead Letters
+            </NavLink>
+            <NavLink href="events" style="display: block; padding: 10px 16px; color: white; text-decoration: none;">
+                Events
+            </NavLink>
+        </div>
+    </nav>
+
+    <main style="flex: 1; padding: 24px; background: #fafafa;">
+        @Body
+    </main>
+</div>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+    <a class="dismiss">X</a>
 </div>

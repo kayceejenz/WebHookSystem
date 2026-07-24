@@ -1,0 +1,84 @@
+@page "/dead-letters"
+@using WebHookDeliveryService.Application.DTOs
+@inject HttpClient Http
+
+<PageTitle>Dead Letters</PageTitle>
+
+<h1>Dead Letter Queue</h1>
+
+@if (_deadLetters is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <p>Total: @_totalCount dead letters</p>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 8px;">Event Type</th>
+                <th style="padding: 8px;">Target URL</th>
+                <th style="padding: 8px;">Reason</th>
+                <th style="padding: 8px;">Attempts</th>
+                <th style="padding: 8px;">Expires</th>
+                <th style="padding: 8px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dl in _deadLetters)
+            {
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px;">@dl.EventType</td>
+                    <td style="padding: 8px;">@(dl.SubscriptionUrl.Length > 30 ? dl.SubscriptionUrl[..30] + "..." : dl.SubscriptionUrl)</td>
+                    <td style="padding: 8px;">@(dl.Reason.Length > 40 ? dl.Reason[..40] + "..." : dl.Reason)</td>
+                    <td style="padding: 8px;">@dl.AttemptCount</td>
+                    <td style="padding: 8px;">@dl.ExpiresAt.ToString("yyyy-MM-dd")</td>
+                    <td style="padding: 8px;">
+                        <button @onclick="() => Replay(dl.Id)" style="padding: 4px 8px; cursor: pointer; margin-right: 4px;">
+                            Replay
+                        </button>
+                        <button @onclick="() => Dismiss(dl.Id)" style="padding: 4px 8px; cursor: pointer;">
+                            Dismiss
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<DeadLetterResponse>? _deadLetters;
+    private int _totalCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeadLetters();
+    }
+
+    private async Task LoadDeadLetters()
+    {
+        try
+        {
+            var result = await Http.GetFromJsonAsync<DeadLetterListResponse>("/api/dead-letters?take=100");
+            _deadLetters = result?.Items ?? [];
+            _totalCount = result?.TotalCount ?? 0;
+        }
+        catch (Exception)
+        {
+            _deadLetters = [];
+        }
+    }
+
+    private async Task Replay(Guid id)
+    {
+        await Http.PostAsync($"/api/dead-letters/{id}/replay", null);
+        await LoadDeadLetters();
+    }
+
+    private async Task Dismiss(Guid id)
+    {
+        await Http.DeleteAsync($"/api/dead-letters/{id}");
+        await LoadDeadLetters();
+    }
+}

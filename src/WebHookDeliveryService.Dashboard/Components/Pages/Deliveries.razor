@@ -1,0 +1,110 @@
+@page "/deliveries"
+@using WebHookDeliveryService.Application.DTOs
+@using WebHookDeliveryService.Domain.Enums
+@inject HttpClient Http
+
+<PageTitle>Deliveries</PageTitle>
+
+<h1>Delivery Log</h1>
+
+<div style="margin-bottom: 16px;">
+    <label>Status: </label>
+    <select @bind="_selectedStatus" @bind:after="LoadDeliveries">
+        <option value="">All</option>
+        @foreach (var status in Enum.GetValues<DeliveryStatus>())
+        {
+            <option value="@status">@status</option>
+        }
+    </select>
+</div>
+
+@if (_deliveries is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <p>Total: @_totalCount deliveries</p>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 8px;">Status</th>
+                <th style="padding: 8px;">Event Type</th>
+                <th style="padding: 8px;">Target URL</th>
+                <th style="padding: 8px;">Attempts</th>
+                <th style="padding: 8px;">Last Code</th>
+                <th style="padding: 8px;">Error</th>
+                <th style="padding: 8px;">Created</th>
+                <th style="padding: 8px;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in _deliveries)
+            {
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px;">
+                        <span style="color: @GetStatusColor(d.Status); font-weight: bold;">@d.Status</span>
+                    </td>
+                    <td style="padding: 8px;">@d.EventType</td>
+                    <td style="padding: 8px;">@(d.SubscriptionUrl.Length > 30 ? d.SubscriptionUrl[..30] + "..." : d.SubscriptionUrl)</td>
+                    <td style="padding: 8px;">@d.AttemptCount</td>
+                    <td style="padding: 8px;">@(d.LastResponseCode?.ToString() ?? "-")</td>
+                    <td style="padding: 8px;">@(d.LastError?[..Math.Min(30, d.LastError.Length)] ?? "-")</td>
+                    <td style="padding: 8px;">@d.CreatedAt.ToString("MM-dd HH:mm:ss")</td>
+                    <td style="padding: 8px;">
+                        @if (d.Status is DeliveryStatus.Failed or DeliveryStatus.DeadLettered)
+                        {
+                            <button @onclick="() => RetryDelivery(d.Id)" style="padding: 4px 8px; cursor: pointer;">
+                                Retry
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<DeliveryResponse>? _deliveries;
+    private string? _selectedStatus;
+    private int _totalCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeliveries();
+    }
+
+    private async Task LoadDeliveries()
+    {
+        try
+        {
+            var url = string.IsNullOrEmpty(_selectedStatus)
+                ? "/api/deliveries?take=100"
+                : $"/api/deliveries?status={_selectedStatus}&take=100";
+
+            var result = await Http.GetFromJsonAsync<DeliveryListResponse>(url);
+            _deliveries = result?.Items ?? [];
+            _totalCount = result?.TotalCount ?? 0;
+        }
+        catch (Exception)
+        {
+            _deliveries = [];
+        }
+    }
+
+    private async Task RetryDelivery(Guid id)
+    {
+        await Http.PostAsync($"/api/deliveries/{id}/retry", null);
+        await LoadDeliveries();
+    }
+
+    private string GetStatusColor(DeliveryStatus status) => status switch
+    {
+        DeliveryStatus.Success => "#2e7d32",
+        DeliveryStatus.Failed => "#c62828",
+        DeliveryStatus.Retrying => "#e65100",
+        DeliveryStatus.DeadLettered => "#ad1457",
+        _ => "#666"
+    };
+}
