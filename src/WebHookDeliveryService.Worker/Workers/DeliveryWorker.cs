@@ -1,13 +1,8 @@
 namespace WebHookDeliveryService.Worker.Workers;
 
-public class DeliveryWorker : BackgroundService
+public class DeliveryWorker(ILogger<DeliveryWorker> logger) : BackgroundService
 {
-    private readonly ILogger<DeliveryWorker> _logger;
-
-    public DeliveryWorker(ILogger<DeliveryWorker> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<DeliveryWorker> _logger = logger;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
